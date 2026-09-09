@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Adds Job City ✓ - Telegram Mini App</title>
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #060b17;
+      --bg-card: #0d162a;
+      --bg-card-hover: #13203c;
+      --cyan-neon: #00d2ff;
+      --cyan-glow: rgba(0, 210, 255, 0.4);
+      --cyan-light: rgba(0, 210, 255, 0.12);
+      --text-main: #ffffff;
+      --text-muted: #8ea3bf;
+      --accent-green: #00f090;
+      --accent-gold: #ffbe3b;
+      --accent-red: #ff4757;
+      --border-cyan: rgba(0, 210, 255, 0.25);
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hind Siliguri', sans-serif;
+      background-color: var(--bg-main);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.12) 0%, transparent 65%),
+        radial-gradient(circle at 100% 100%, rgba(0, 140, 255, 0.08) 0%, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 85px;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(6, 11, 23, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 210, 255, 0.15);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-title span.neon {
+      color: var(--cyan-neon);
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--cyan-neon);
+      color: #060b17;
+      font-size: 0.72rem;
+      font-weight: 900;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 210, 255, 0.08);
+      border: 1px solid var(--border-cyan);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      color: var(--cyan-neon);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    /* Container */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Banner Ad Container (Monetag / Adsterra Banner Slot) */
+    .banner-ad-box {
+      background: linear-gradient(135deg, rgba(13, 22, 42, 0.95), rgba(8, 15, 30, 0.95));
+      border: 1px dashed var(--cyan-neon);
+      border-radius: var(--radius-md);
+      padding: 14px 12px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 210, 255, 0.12);
+      transition: all 0.25s ease;
+    }
+
+    .banner-ad-box:hover {
+      border-style: solid;
+      box-shadow: 0 6px 20px rgba(0, 210, 255, 0.25);
+    }
+
+    .ad-tag {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.62rem;
+      background: rgba(0, 210, 255, 0.2);
+      color: var(--cyan-neon);
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .ad-content-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .ad-content-sub {
+      font-size: 0.72rem;
+      color: var(--cyan-neon);
+      margin-top: 3px;
+    }
+
+    /* Tab Page Switcher */
+    .tab-page {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .tab-page.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Balance Card */
+    .balance-card {
+      background: linear-gradient(135deg, #0d1b38 0%, #081024 100%);
+      border: 1px solid var(--border-cyan);
+      border-radius: var(--radius-lg);
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 210, 255, 0.15);
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .balance-amount {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 8px 0 14px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .balance-amount .currency {
+      color: var(--cyan-neon);
+      font-size: 1.4rem;
+      text-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background: rgba(0, 210, 255, 0.08);
+      border: 1px solid var(--border-cyan);
+      color: #fff;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 210, 255, 0.18);
+      color: var(--cyan-neon);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-cyan);
+    }
+
+    .stat-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(0, 210, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: var(--cyan-neon);
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-title {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    /* Primary Glowing Button */
+    .btn-neon {
+      width: 100%;
+      background: linear-gradient(135deg, #00d2ff 0%, #0099ff 100%);
+      color: #060b17;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 15px 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px var(--cyan-glow);
+      transition: all 0.25s ease;
+    }
+
+    .btn-neon:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 210, 255, 0.6);
+    }
+
+    .btn-neon:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-neon:disabled {
+      background: #192742;
+      color: #657896;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Task Page Section */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 210, 255, 0.15);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-counter-pill {
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid var(--cyan-neon);
+      color: var(--cyan-neon);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00d2ff, #00ffd5);
+      box-shadow: 0 0 10px var(--cyan-neon);
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-item {
+      background: rgba(13, 22, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .task-item:hover {
+      border-color: var(--border-cyan);
+      background: var(--bg-card-hover);
+    }
+
+    .task-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(0, 210, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .task-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .task-reward {
+      font-size: 0.75rem;
+      color: var(--accent-green);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .btn-task-action {
+      background: var(--cyan-neon);
+      color: #060b17;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .btn-task-action:hover {
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    /* Requirement Badge on Wallet */
+    .requirement-box {
+      background: rgba(0, 210, 255, 0.08);
+      border: 1px solid var(--border-cyan);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .requirement-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .req-progress-text {
+      color: var(--cyan-neon);
+      font-weight: 800;
+    }
+
+    /* Wallet Page */
+    .payment-methods {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .method-chip {
+      background: rgba(13, 22, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 12px 6px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      transition: all 0.2s ease;
+    }
+
+    .method-chip.active {
+      border-color: var(--cyan-neon);
+      background: rgba(0, 210, 255, 0.12);
+      color: var(--cyan-neon);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.2);
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .custom-input {
+      width: 100%;
+      background: #081024;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .custom-input:focus {
+      border-color: var(--cyan-neon);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+    }
+
+    .notice-box {
+      background: rgba(255, 190, 59, 0.08);
+      border: 1px solid rgba(255, 190, 59, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      color: var(--accent-gold);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .history-item {
+      background: rgba(8, 16, 36, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+
+    .history-status-pending {
+      color: var(--accent-gold);
+      background: rgba(255, 190, 59, 0.12);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* Fixed Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: rgba(6, 11, 23, 0.92);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(0, 210, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 8px 0;
+    }
+
+    .nav-icon {
+      font-size: 1.35rem;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .nav-tab.active {
+      color: var(--cyan-neon);
+    }
+
+    .nav-tab.active .nav-icon {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 6px var(--cyan-glow));
+    }
+
+    .nav-tab.active .nav-label {
+      font-weight: 800;
+      text-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    /* Modal / Alert Popup */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 18, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-card {
+      background: #0d162a;
+      border: 1px solid var(--border-cyan);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 210, 255, 0.25);
+      animation: modalPop 0.25s ease;
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-icon {
+      font-size: 2.8rem;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .modal-text {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(13, 22, 42, 0.95);
+      border: 1px solid var(--cyan-neon);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px var(--cyan-glow);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="header">
+    <div class="brand-title">
+      <span class="neon">Adds Job City</span>
+      <div class="verified-badge" title="Verified Mini App">✓</div>
+    </div>
+    <div class="user-pill" id="userPill">
+      <div class="live-dot"></div>
+      <span id="userName">User_9421</span>
+    </div>
+  </header>
+
+  <main class="app-container">
+
+    <!-- Top Banner Ad Container (Monetag/Adsterra Banner Slot) -->
+    <div class="banner-ad-box" id="bannerAdBox" onclick="triggerAd('banner_top')">
+      <div class="ad-tag">SPONSOR AD</div>
+      <div class="ad-content-title">
+        <span>📢</span> স্পন্সর ব্যানার বিজ্ঞাপন (Banner Ad 320x50)
+      </div>
+      <div class="ad-content-sub">এখানে Monetag / Adsterra ব্যানার কোড যুক্ত করুন • ক্লিক করে অ্যাড দেখুন</div>
+    </div>
+
+    <!-- 1. HOME TAB PAGE -->
+    <section class="tab-page active" id="page-home">
+      <!-- Balance Card -->
+      <div class="balance-card">
+        <div class="balance-label">
+          <span>💼 মোট ব্যালেন্স (Total Balance)</span>
+        </div>
+        <div class="balance-amount">
+          <span class="currency">TK</span>
+          <span id="balanceText">150.00</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-secondary" onclick="switchTab('wallet')">
+            <span>💳</span> টাকা তুলুন (Withdraw)
+          </button>
+          <button class="btn-secondary" onclick="switchTab('tasks')">
+            <span>📋</span> কাজ শুরু করুন
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Grid (মোট অ্যাড দেখা & মোট রেফার) -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap">📺</div>
+          <div class="stat-info">
+            <div class="stat-title">মোট অ্যাড দেখা</div>
+            <div class="stat-value" id="totalTasksCount">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap">👥</div>
+          <div class="stat-info">
+            <div class="stat-title">মোট রেফার</div>
+            <div class="stat-value" id="totalReferCount">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Withdrawal Progress Status Card -->
+      <div class="requirement-box">
+        <div class="requirement-header">
+          <span>উইথড্র করার যোগ্যতা (Withdrawal Goal)</span>
+          <span class="req-progress-text" id="homeReqStatus">0/100 Ads</span>
+        </div>
+        <div class="progress-bar-wrap" style="margin-bottom: 6px;">
+          <div class="progress-fill" id="homeReqBar" style="width: 0%;"></div>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-muted);">
+          উইথড্র আনলক করতে সর্বনিম্ন ১০০টি অ্যাড সম্পন্ন করতে হবে।
+        </div>
+      </div>
+
+      <!-- Daily Bonus Button -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🎁</span> দৈনিক বোনাস (Daily Bonus)
+          </div>
+          <div class="task-counter-pill">+১০ টাকা</div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+          প্রতিদিন একবার বোনাস নিন। বাটনে ক্লিক করে একটি বিজ্ঞাপন দেখে ব্যালেন্সে ১০ টাকা যোগ করুন।
+        </p>
+        <button class="btn-neon" id="btnDailyBonus" onclick="claimDailyBonus()">
+          <span>🎁</span> দৈনিক বোনাস নিন (+১০ টাকা)
+        </button>
+      </div>
+
+      <!-- Referral Quick Box -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🔗</span> বন্ধুদের আমন্ত্রণ জানান (Refer & Earn)
+          </div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+          প্রতিটি সফল রেফারে পাবেন অতিরিক্ত বোনাস! আপনার রেফার লিংক বন্ধুদের সাথে শেয়ার করুন।
+        </p>
+        <button class="btn-secondary" style="width: 100%; justify-content: center;" onclick="copyReferLink()">
+          <span>📋</span> রেফারেল লিংক কপি করুন
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. TASK TAB PAGE -->
+    <section class="tab-page" id="page-tasks">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🎯</span> অ্যাড দেখে ইনকাম (Watch Ads)
+          </div>
+          <div class="task-counter-pill" id="taskRatio">0/30</div>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+          প্রতিটি বিজ্ঞাপনে ব্যালেন্সে ১০ টাকা যোগ হবে। দৈনিক সীমা সম্পন্ন করে প্রতিদিন ইনকাম করুন।
+        </p>
+
+        <!-- Progress bar -->
+        <div class="progress-bar-wrap">
+          <div class="progress-fill" id="taskProgressBar"></div>
+        </div>
+
+        <button class="btn-neon" id="btnWatchAdMain" onclick="doAdTask()">
+          <span>▶️</span> অ্যাড দেখুন ও আয় করুন (+১০ টাকা)
+        </button>
+      </div>
+
+      <!-- Task Lists -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>⚡</span> উপলব্ধ বিজ্ঞাপনী কাজসমূহ
+          </div>
+        </div>
+        <div class="task-list">
+          <div class="task-item">
+            <div class="task-item-left">
+              <div class="task-icon">📺</div>
+              <div>
+                <div class="task-name">স্মার্টলিংক ভিডিও বিজ্ঞাপন #১</div>
+                <div class="task-reward">+১০ টাকা ব্যালেন্সে যোগ হবে</div>
+              </div>
+            </div>
+            <button class="btn-task-action" onclick="doAdTask()">শুরু করুন</button>
+          </div>
+          <div class="task-item">
+            <div class="task-item-left">
+              <div class="task-icon">🌐</div>
+              <div>
+                <div class="task-name">ডিরেক্ট লিঙ্ক ওয়েব বিজ্ঞাপন #২</div>
+                <div class="task-reward">+১০ টাকা ব্যালেন্সে যোগ হবে</div>
+              </div>
+            </div>
+            <button class="btn-task-action" onclick="doAdTask()">শুরু করুন</button>
+          </div>
+          <div class="task-item">
+            <div class="task-item-left">
+              <div class="task-icon">💎</div>
+              <div>
+                <div class="task-name">প্রিমিয়াম স্পনসর টাস্ক #৩</div>
+                <div class="task-reward">+১০ টাকা ব্যালেন্সে যোগ হবে</div>
+              </div>
+            </div>
+            <button class="btn-task-action" onclick="doAdTask()">শুরু করুন</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. WALLET TAB PAGE -->
+    <section class="tab-page" id="page-wallet">
+      <!-- Balance Review -->
+      <div class="balance-card">
+        <div class="balance-label">উত্তোলনযোগ্য ব্যালেন্স (Available Balance)</div>
+        <div class="balance-amount">
+          <span class="currency">TK</span>
+          <span id="walletBalanceText">150.00</span>
+        </div>
+      </div>
+
+      <!-- Withdrawal Condition / Progress Notice -->
+      <div class="requirement-box">
+        <div class="requirement-header">
+          <span>উইথড্র শর্ত (Withdrawal Requirement):</span>
+          <span class="req-progress-text" id="walletReqProgress">0/100 Ads</span>
+        </div>
+        <div class="progress-bar-wrap" style="margin-bottom: 8px;">
+          <div class="progress-fill" id="walletReqBar" style="width: 0%;"></div>
+        </div>
+        <div id="walletReqNote" style="font-size: 0.76rem; color: var(--accent-gold);">
+          ⚠️ উইথড্র রিকোয়েস্ট করতে আপনাকে অন্তত ১০০টি অ্যাড দেখা সম্পন্ন করতে হবে!
+        </div>
+      </div>
+
+      <!-- Withdrawal Form -->
+      <div class="section-card">
+        <div class="section-title" style="margin-bottom: 12px;">
+          <span>💸</span> টাকা উত্তোলন ফর্ম (Withdrawal)
+        </div>
+
+        <div class="notice-box">
+          <span>ℹ️</span> সর্বনিম্ন উত্তোলন ২০০০ টাকা (Minimum Withdraw: TK 2000)
+        </div>
+
+        <label class="input-label">পেমেন্ট মেথড নির্বাচন করুন</label>
+        <div class="payment-methods">
+          <div class="method-chip active" onclick="selectPaymentMethod(this, 'bKash')">বিকাশ (bKash)</div>
+          <div class="method-chip" onclick="selectPaymentMethod(this, 'Nagad')">নগদ (Nagad)</div>
+          <div class="method-chip" onclick="selectPaymentMethod(this, 'Rocket')">রকেট (Rocket)</div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">অ্যাকাউন্ট নম্বর (১১ ডিজিট)</label>
+          <input type="tel" class="custom-input" id="accountNumber" placeholder="যেমন: 017XXXXXXXX" maxlength="11" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">উত্তোলনের পরিমাণ (টাকা)</label>
+          <input type="number" class="custom-input" id="withdrawAmount" placeholder="সর্বনিম্ন ২০০০ টাকা" min="2000" />
+        </div>
+
+        <button class="btn-neon" onclick="submitWithdraw()">
+          <span>📤</span> উইথড্র রিকোয়েস্ট পাঠান
+        </button>
+      </div>
+
+      <!-- History -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>📜</span> সাম্প্রতিক উত্তোলন হিস্টোরি
+        </div>
+        <div class="history-list" id="withdrawHistoryList">
+          <div style="font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 10px;">
+            কোনো পূর্ববর্তী উত্তোলন নেই
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar (Fixed) -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" id="tab-home" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-tab" id="tab-tasks" onclick="switchTab('tasks')">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Tasks</span>
+    </button>
+    <button class="nav-tab" id="tab-wallet" onclick="switchTab('wallet')">
+      <span class="nav-icon">💳</span>
+      <span class="nav-label">Wallet</span>
+    </button>
+  </nav>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="toastBox">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">বিজ্ঞপ্তি</span>
+  </div>
+
+  <!-- Interactive Alert Modal -->
+  <div class="modal-overlay" id="customModal">
+    <div class="modal-card">
+      <div class="modal-icon" id="modalIcon">🎉</div>
+      <div class="modal-title" id="modalTitle">সফল হয়েছে!</div>
+      <div class="modal-text" id="modalText">আপনার ব্যালেন্সে টাকা যোগ করা হয়েছে।</div>
+      <button class="btn-neon" onclick="closeModal()">ঠিক আছে</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================
+       ১. অ্যাড নেটওয়ার্ক কনফিগারেশন (Monetag / Adsterra Direct Link)
+       ========================================================== */
+    const AD_CONFIG = {
+      // এখানে আপনার Monetag বা Adsterra-এর Direct Link / SmartLink বসান:
+      directLink: "https://otieupturn.com/4/8834921",
+      bannerLink: "https://otieupturn.com/4/8834921",
+      taskRewardTK: 10,       // প্রতিটি অ্যাডে ১০ টাকা
+      dailyBonusTK: 10,       // দৈনিক বোনাস ১০ টাকা
+      dailyTaskLimit: 30,     // দৈনিক কাজের লিমিট
+      requiredAdsToWithdraw: 100  // উইথড্র শর্ত: সর্বনিম্ন ১০০টি অ্যাড দেখা
+    };
+
+    /* ==========================================================
+       ২. টেলিগ্রাম ওয়েব অ্যাপ SDK ইনিশিয়ালাইজেশন
+       ========================================================== */
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.setHeaderColor('#060b17');
+        tg.setBackgroundColor('#060b17');
+        tg.enableClosingConfirmation();
+      } catch (e) {
+        console.log("Telegram theme api note:", e);
+      }
+
+      // Telegram User Name detection
+      if (tg.initDataUnsafe?.user) {
+        const u = tg.initDataUnsafe.user;
+        const displayName = u.first_name || u.username || "Member";
+        document.getElementById('userName').textContent = displayName;
+      }
+    }
+
+    // Web Audio Sound Synthesizer (ক্লিক এবং কয়েন যোগের সুন্দর সাউন্ড)
+    const AudioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      },
+      playCoin() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.type = 'sine';
+          const now = this.ctx.currentTime;
+          osc.frequency.setValueAtTime(987.77, now); // B5
+          osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12); // E6
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } catch (e) {}
+      }
+    };
+
+    /* ==========================================================
+       ৩. স্টেট ও লোকাল স্টোরেজ (State Management)
+       প্রারম্ভিক ব্যালেন্স (Starting Balance) = TK 150.00
+       ========================================================== */
+    const State = {
+      balance: 150.00,
+      tasksDoneToday: 0,
+      totalAdsWatched: 0,
+      totalRefer: 0,
+      selectedMethod: 'bKash',
+      lastBonusDate: null,
+      withdrawHistory: [],
+
+      load() {
+        try {
+          const saved = localStorage.getItem('adds_job_city_v2_data');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            this.balance = typeof parsed.balance === 'number' ? parsed.balance : 150.00;
+            this.tasksDoneToday = parsed.tasksDoneToday || 0;
+            this.totalAdsWatched = typeof parsed.totalAdsWatched === 'number' ? parsed.totalAdsWatched : (parsed.totalTasks || 0);
+            this.totalRefer = parsed.totalRefer || 0;
+            this.lastBonusDate = parsed.lastBonusDate || null;
+            this.withdrawHistory = Array.isArray(parsed.withdrawHistory) ? parsed.withdrawHistory : [];
+            
+            // দৈনিক লিমিট রিসেট চেক
+            const todayStr = new Date().toDateString();
+            if (parsed.lastSavedDate !== todayStr) {
+              this.tasksDoneToday = 0;
+              this.save();
+            }
+          } else {
+            this.save();
+          }
+        } catch (e) {
+          console.error("State load error:", e);
+        }
+      },
+
+      save() {
+        try {
+          const payload = {
+            balance: this.balance,
+            tasksDoneToday: this.tasksDoneToday,
+            totalAdsWatched: this.totalAdsWatched,
+            totalRefer: this.totalRefer,
+            lastBonusDate: this.lastBonusDate,
+            withdrawHistory: this.withdrawHistory,
+            lastSavedDate: new Date().toDateString()
+          };
+          localStorage.setItem('adds_job_city_v2_data', JSON.stringify(payload));
+        } catch (e) {}
+      }
+    };
+
+    /* ==========================================================
+       ৪. অ্যাড ওপেন করার ফাংশন (triggerAd)
+       Monetag বা Adsterra ডিরেক্ট লিঙ্ক পপ-আপ করা
+       ========================================================== */
+    function triggerAd(adType = 'general') {
+      const adUrl = (adType === 'banner_top') ? AD_CONFIG.bannerLink : AD_CONFIG.directLink;
+      
+      // Haptic Feedback (Telegram)
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+      }
+
+      console.log("Triggering Ad for:", adType, adUrl);
+
+      // Telegram WebApp openLink অগ্রাধিকার দেওয়া হয়েছে
+      if (tg && typeof tg.openLink === 'function') {
+        try {
+          tg.openLink(adUrl);
+          return true;
+        } catch (e) {
+          console.log("Telegram openLink fallback:", e);
+        }
+      }
+
+      // সাধারণ ব্রাউজার ফলব্যাক (Window Open)
+      try {
+        const opened = window.open(adUrl, '_blank');
+        if (!opened) {
+          showToast("অ্যাড লিংক ওপেন করা হয়েছে 🔗");
+        }
+      } catch (e) {
+        showToast("অ্যাড লোড করা হয়েছে");
+      }
+      return true;
+    }
+
+    /* ==========================================================
+       ৫. UI আপডেট ও ট্যাব সুইচিং
+       ========================================================== */
+    function renderUI() {
+      // ব্যালেন্স আপডেট
+      const formattedBal = State.balance.toFixed(2);
+      document.getElementById('balanceText').textContent = formattedBal;
+      document.getElementById('walletBalanceText').textContent = formattedBal;
+
+      // পরিসংখ্যান গ্রিড (মোট অ্যাড দেখা)
+      document.getElementById('totalTasksCount').textContent = State.totalAdsWatched;
+      document.getElementById('totalReferCount').textContent = State.totalRefer;
+
+      // হোম পেজে উইথড্রয়াল প্রোগ্রেস বার (০/১০০)
+      const reqPercent = Math.min(100, (State.totalAdsWatched / AD_CONFIG.requiredAdsToWithdraw) * 100);
+      document.getElementById('homeReqStatus').textContent = `${State.totalAdsWatched}/${AD_CONFIG.requiredAdsToWithdraw} Ads`;
+      document.getElementById('homeReqBar').style.width = reqPercent + '%';
+
+      // ওয়ালেট পেজে উইথড্রয়াল প্রোগ্রেস বার ও নোট
+      document.getElementById('walletReqProgress').textContent = `${State.totalAdsWatched}/${AD_CONFIG.requiredAdsToWithdraw} Ads`;
+      document.getElementById('walletReqBar').style.width = reqPercent + '%';
+      const reqNoteEl = document.getElementById('walletReqNote');
+      if (State.totalAdsWatched >= AD_CONFIG.requiredAdsToWithdraw) {
+        reqNoteEl.innerHTML = '✅ <span style="color: var(--accent-green); font-weight: 700;">অভিনন্দন! আপনার উইথড্র শর্ত পূরণ হয়েছে। আপনি এখন টাকা তুলতে পারবেন।</span>';
+      } else {
+        const remaining = AD_CONFIG.requiredAdsToWithdraw - State.totalAdsWatched;
+        reqNoteEl.innerHTML = `⚠️ <span style="color: var(--accent-gold);">উইথড্র করতে আরও <strong>${remaining}টি</strong> অ্যাড দেখা বাকি আছে! (ন্যূনতম ১০০টি অ্যাড আবশ্যক)</span>`;
+      }
+
+      // টাস্ক পেজ আপডেট
+      document.getElementById('taskRatio').textContent = `${State.tasksDoneToday}/${AD_CONFIG.dailyTaskLimit}`;
+      const percentage = Math.min(100, (State.tasksDoneToday / AD_CONFIG.dailyTaskLimit) * 100);
+      document.getElementById('taskProgressBar').style.width = percentage + '%';
+
+      const mainWatchBtn = document.getElementById('btnWatchAdMain');
+      if (State.tasksDoneToday >= AD_CONFIG.dailyTaskLimit) {
+        mainWatchBtn.disabled = true;
+        mainWatchBtn.innerHTML = `<span>⚠️</span> আজকের লিমিট শেষ (${AD_CONFIG.dailyTaskLimit}/${AD_CONFIG.dailyTaskLimit})`;
+      } else {
+        mainWatchBtn.disabled = false;
+        mainWatchBtn.innerHTML = '<span>▶️</span> অ্যাড দেখুন ও আয় করুন (+১০ টাকা)';
+      }
+
+      // দৈনিক বোনাস বাটন স্ট্যাটাস
+      const todayStr = new Date().toDateString();
+      const bonusBtn = document.getElementById('btnDailyBonus');
+      if (State.lastBonusDate === todayStr) {
+        bonusBtn.disabled = true;
+        bonusBtn.innerHTML = '<span>✅</span> আজকের বোনাস নেওয়া সম্পন্ন';
+      } else {
+        bonusBtn.disabled = false;
+        bonusBtn.innerHTML = '<span>🎁</span> দৈনিক বোনাস নিন (+১০ টাকা)';
+      }
+
+      renderHistory();
+    }
+
+    function switchTab(tabId) {
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.selectionChanged();
+      }
+
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      const targetPage = document.getElementById('page-' + tabId);
+
+      if (targetTab && targetPage) {
+        targetTab.classList.add('active');
+        targetPage.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    /* ==========================================================
+       ৬. দৈনিক বোনাস (Daily Bonus)
+       ========================================================== */
+    function claimDailyBonus() {
+      const todayStr = new Date().toDateString();
+      if (State.lastBonusDate === todayStr) {
+        showModal('⚠️', 'ইতিমধ্যেই নেওয়া হয়েছে', 'আপনি আজকের দৈনিক বোনাস ইতিমধ্যে গ্রহণ করেছেন। অনুগ্রহ করে আগামীকাল আবার চেষ্টা করুন।');
+        return;
+      }
+
+      // বিজ্ঞাপন ওপেন করা
+      triggerAd('daily_bonus');
+
+      // ব্যালেন্স যোগ ও সংরক্ষণ
+      State.balance += AD_CONFIG.dailyBonusTK;
+      State.lastBonusDate = todayStr;
+      State.totalAdsWatched += 1;
+      State.save();
+      renderUI();
+
+      // Sound & Celebration
+      AudioEngine.playCoin();
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+      showModal('🎁', 'অভিনন্দন! বোনাস পেয়েছেন', `আপনি সফলভাবে ১০ টাকা দৈনিক বোনাস পেয়েছেন!\nবর্তমান ব্যালেন্স: TK ${State.balance.toFixed(2)}`);
+    }
+
+    /* ==========================================================
+       ৭. অ্যাড দেখে ইনকাম (Task Page)
+       - প্রতিটি অ্যাডে ১০ টাকা যোগ
+       - মোট অ্যাড সংখ্যা ট্র্যাকিং
+       ========================================================== */
+    function doAdTask() {
+      if (State.tasksDoneToday >= AD_CONFIG.dailyTaskLimit) {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        showModal('⚠️', 'আজকের লিমিট শেষ!', `আজকের ${AD_CONFIG.dailyTaskLimit}টি কাজ সম্পন্ন হয়েছে! অনুগ্রহ করে আগামীকাল আবার চেষ্টা করুন।`);
+        return;
+      }
+
+      // বিজ্ঞাপন ওপেন করা
+      triggerAd('task_item');
+
+      // কাজ ও ব্যালেন্স আপডেট
+      State.tasksDoneToday += 1;
+      State.totalAdsWatched += 1;
+      State.balance += AD_CONFIG.taskRewardTK;
+      State.save();
+      renderUI();
+
+      AudioEngine.playCoin();
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+      showToast(`+১০ টাকা যোগ হয়েছে! (মোট অ্যাড: ${State.totalAdsWatched})`);
+
+      if (State.totalAdsWatched === AD_CONFIG.requiredAdsToWithdraw) {
+        showModal('🎉', 'উইথড্র শর্ত আনলক হয়েছে!', 'অভিনন্দন! আপনি ১০০টি অ্যাড দেখা সম্পন্ন করেছেন। এখন ওয়ালেট থেকে টাকা তুলতে পারবেন।');
+      } else if (State.tasksDoneToday === AD_CONFIG.dailyTaskLimit) {
+        showModal('🏆', 'আজকের কাজ শেষ!', `আজকের ${AD_CONFIG.dailyTaskLimit}টি বিজ্ঞাপন টাস্ক সফলভাবে সম্পন্ন হয়েছে! কাল আবার নতুন টাস্ক পাবেন।`);
+      }
+    }
+
+    /* ==========================================================
+       ৮. ওয়ালেট ও উইথড্র (Wallet & Withdrawal)
+       - শর্ত: সর্বনিম্ন ১০০টি অ্যাড (100 Ads) দেখা থাকতে হবে
+       - নতুবা অ্যালার্ট দেখাবে: "উইথড্র করতে অন্তত ১০০টি অ্যাড দেখা সম্পন্ন করতে হবে!"
+       ========================================================== */
+    function selectPaymentMethod(element, method) {
+      document.querySelectorAll('.method-chip').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+      State.selectedMethod = method;
+      if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    }
+
+    function submitWithdraw() {
+      // ১. উইথড্রয়াল শর্ত যাচাই (সর্বনিম্ন ১০০টি অ্যাড দেখা)
+      if (State.totalAdsWatched < AD_CONFIG.requiredAdsToWithdraw) {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        const remaining = AD_CONFIG.requiredAdsToWithdraw - State.totalAdsWatched;
+        showModal(
+          '⚠️',
+          'শর্ত অপূর্ণ রয়েছে!',
+          `উইথড্র করতে অন্তত ১০০টি অ্যাড দেখা সম্পন্ন করতে হবে!\n\nআপনি দেখেছেন: ${State.totalAdsWatched}টি\nবাকি আছে: ${remaining}টি অ্যাড।`
+        );
+        return;
+      }
+
+      // ২. ইনপুট ভ্যালিডেশন
+      const phone = document.getElementById('accountNumber').value.trim();
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+      if (!phone || phone.length < 11) {
+        showModal('❌', 'ভুল নম্বর', 'অনুগ্রহ করে সঠিক ১১ ডিজিটের মোবাইল ব্যাংকিং নম্বর প্রবেশ করান।');
+        return;
+      }
+
+      if (State.balance < 2000) {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        showModal('⚠️', 'অপর্যাপ্ত ব্যালেন্স', 'উইথড্র করতে সর্বনিম্ন ২০০০ টাকা ব্যালেন্স থাকতে হবে!');
+        return;
+      }
+
+      if (isNaN(amount) || amount < 2000) {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+        showModal('⚠️', 'সর্বনিম্ন উত্তোলন ২০০০ টাকা', 'উইথড্র করতে সর্বনিম্ন ২০০০ টাকা বা তার বেশি পরিমাণ দিন।');
+        return;
+      }
+
+      if (amount > State.balance) {
+        showModal('❌', 'অপর্যাপ্ত ব্যালেন্স', `আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই। বর্তমান ব্যালেন্স: TK ${State.balance.toFixed(2)}`);
+        return;
+      }
+
+      // ব্যালেন্স কর্তন
+      State.balance -= amount;
+      
+      const newRecord = {
+        id: Date.now(),
+        method: State.selectedMethod,
+        phone: phone.substring(0, 3) + '*****' + phone.substring(phone.length - 3),
+        amount: amount.toFixed(2),
+        date: new Date().toLocaleDateString('bn-BD'),
+        status: 'বিচারাধীন (Pending)'
+      };
+
+      State.withdrawHistory.unshift(newRecord);
+      State.save();
+      renderUI();
+
+      document.getElementById('withdrawAmount').value = '';
+
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      showModal('✅', 'উইথড্র রিকোয়েস্ট সফল!', `আপনার TK ${amount.toFixed(2)} উত্তোলনের রিকোয়েস্ট জমা হয়েছে। পরবর্তী ১২-২৪ ঘণ্টার মধ্যে পেমেন্ট পেয়ে যাবেন।`);
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('withdrawHistoryList');
+      if (State.withdrawHistory.length === 0) {
+        container.innerHTML = '<div style="font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 10px;">কোনো পূর্ববর্তী উত্তোলন নেই</div>';
+        return;
+      }
+
+      container.innerHTML = State.withdrawHistory.map(item => `
+        <div class="history-item">
+          <div>
+            <div style="font-weight: 700; color: #fff;">${item.method} - TK ${item.amount}</div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);">${item.phone} • ${item.date}</div>
+          </div>
+          <span class="history-status-pending">${item.status}</span>
+        </div>
+      `).join('');
+    }
+
+    function copyReferLink() {
+      const dummyLink = "https://t.me/AddsJobCity_bot?start=ref_" + (tg?.initDataUnsafe?.user?.id || '9421');
+      navigator.clipboard?.writeText(dummyLink).then(() => {
+        showToast("রেফারেল লিংক কপি হয়েছে! 📋");
+      }).catch(() => {
+        showToast("রেফারেল লিংক তৈরি হয়েছে!");
+      });
+    }
+
+    /* ==========================================================
+       ৯. মোডাল এবং টোস্ট কন্ট্রোল
+       ========================================================== */
+    function showModal(icon, title, text) {
+      document.getElementById('modalIcon').textContent = icon;
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalText').innerText = text;
+      document.getElementById('customModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('customModal').classList.remove('active');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBox');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      State.load();
+      renderUI();
+    });
+  </script>
+</body>
+</html>
